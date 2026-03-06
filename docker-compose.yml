@@ -18,15 +18,19 @@ services:
     networks:
       - green-recycle
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pgreen_recycle_2026"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   # Redis 缓存
   redis:
     image: redis:7-alpine
     container_name: green-recycle-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
     networks:
@@ -51,8 +55,9 @@ services:
     environment:
       DB_DSN: green_recycle:green_recycle_2026@tcp(mysql:3306)/green_recycle?charset=utf8mb4&parseTime=True&loc=Local
       REDIS_ADDR: redis:6379
-      JWT_SECRET: your_jwt_secret_key_change_in_production
+      JWT_SECRET: green_recycle_jwt_secret_key_2026
       PORT: 8080
+      GIN_MODE: release
     ports:
       - "8080:8080"
     networks:
@@ -75,6 +80,8 @@ services:
 
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:
