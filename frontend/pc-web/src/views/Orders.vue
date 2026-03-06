@@ -1,36 +1,48 @@
 <template>
   <div class="orders">
-    <h2>📦 我的订单</h2>
-    <el-tabs v-model="activeTab">
-      <el-tab-pane label="全部" name="all" />
-      <el-tab-pane label="待接单" name="pending" />
-      <el-tab-pane label="回收中" name="processing" />
-      <el-tab-pane label="已完成" name="completed" />
-    </el-tabs>
-    
-    <el-table :data="orders" style="width: 100%">
-      <el-table-column prop="orderNo" label="订单号" />
-      <el-table-column prop="type" label="类型">
-        <template #default="{ row }">
-          {{ row.type === 1 ? '上门回收' : '站点回收' }}
-        </template>
-      </el-table-column>
-      <el-table-column prop="totalAmount" label="金额" />
-      <el-table-column prop="status" label="状态">
-        <template #default="{ row }">
-          <el-tag :type="getStatusType(row.status)">
-            {{ getStatusText(row.status) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createdAt" label="下单时间" />
-      <el-table-column label="操作">
-        <template #default="{ row }">
-          <el-button size="small" @click="viewDetail(row)">详情</el-button>
-          <el-button v-if="row.status === 0" size="small" type="danger">取消</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-header class="header">
+      <div class="logo">♻️ Green Recycle</div>
+      <el-menu mode="horizontal" :ellipsis="false" router :default-active="$route.path">
+        <el-menu-item index="/">首页</el-menu-item>
+        <el-menu-item index="/orders">订单</el-menu-item>
+        <el-menu-item index="/prices">价格</el-menu-item>
+        <el-menu-item index="/profile">我的</el-menu-item>
+      </el-menu>
+    </el-header>
+
+    <el-main>
+      <h2>📦 我的订单</h2>
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="全部" name="all" />
+        <el-tab-pane label="待接单" name="pending" />
+        <el-tab-pane label="回收中" name="processing" />
+        <el-tab-pane label="已完成" name="completed" />
+      </el-tabs>
+      
+      <el-table :data="orders" style="width: 100%">
+        <el-table-column prop="orderNo" label="订单号" />
+        <el-table-column prop="type" label="类型">
+          <template #default="{ row }">
+            {{ row.type === 1 ? '上门回收' : '站点回收' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="totalAmount" label="金额" />
+        <el-table-column prop="status" label="状态">
+          <template #default="{ row }">
+            <el-tag :type="getStatusType(row.status)">
+              {{ getStatusText(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="下单时间" />
+        <el-table-column label="操作">
+          <template #default="{ row }">
+            <el-button size="small" @click="viewDetail(row)">详情</el-button>
+            <el-button v-if="row.status === 0" size="small" type="danger">取消</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-main>
   </div>
 </template>
 
@@ -58,3 +70,26 @@ const viewDetail = (order) => {
   console.log('查看订单详情:', order)
 }
 </script>
+
+<style scoped>
+.orders {
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  background: #409EFF;
+  color: white;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  margin-right: 40px;
+}
+
+.orders h2 {
+  margin-bottom: 20px;
+}
+</style>

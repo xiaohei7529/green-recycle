@@ -3,11 +3,12 @@
     <!-- 顶部导航 -->
     <el-header class="header">
       <div class="logo">♻️ Green Recycle</div>
-      <el-menu mode="horizontal" :ellipsis="false">
-        <el-menu-item index="1">首页</el-menu-item>
-        <el-menu-item index="2">订单</el-menu-item>
-        <el-menu-item index="3">价格</el-menu-item>
-        <el-menu-item index="4">我的</el-menu-item>
+      <el-menu mode="horizontal" :ellipsis="false" router>
+        <el-menu-item index="/">首页</el-menu-item>
+        <el-menu-item index="/orders">订单</el-menu-item>
+        <el-menu-item index="/prices">价格</el-menu-item>
+        <el-menu-item index="/profile">我的</el-menu-item>
+        <el-menu-item index="/login" style="margin-left: auto">登录</el-menu-item>
       </el-menu>
     </el-header>
 
@@ -57,6 +58,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const orderForm = ref({
   type: '',
@@ -70,7 +74,7 @@ const stations = ref([
 ])
 
 const submitOrder = () => {
-  console.log('提交订单:', orderForm.value)
+  router.push('/login')
 }
 </script>
 
@@ -82,7 +86,6 @@ const submitOrder = () => {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   background: #409EFF;
   color: white;
 }
@@ -90,9 +93,13 @@ const submitOrder = () => {
 .logo {
   font-size: 24px;
   font-weight: bold;
+  margin-right: 40px;
 }
 
 .quick-order, .nearby-stations {
   margin-bottom: 20px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 </style>
