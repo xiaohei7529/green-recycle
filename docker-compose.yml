@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: green-recycle-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: green_recycle_2026
+      MYSQL_DATABASE: green_recycle
+      MYSQL_USER: green_recycle
+      MYSQL_PASSWORD: green_recycle_2026
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/scripts/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - green-recycle
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: green-recycle-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - green-recycle
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: green-recycle-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_DSN: green_recycle:green_recycle_2026@tcp(mysql:3306)/green_recycle?charset=utf8mb4&parseTime=True&loc=Local
+      REDIS_ADDR: redis:6379
+      JWT_SECRET: your_jwt_secret_key_change_in_production
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - green-recycle
+    restart: unless-stopped
+
+  # 前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: green-recycle-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - green-recycle
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  green-recycle:
+    driver: bridge
