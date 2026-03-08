@@ -39,15 +39,6 @@ func (s *UserService) UpdateProfile(ctx context.Context, userID uint, nickname, 
 	}).Error
 }
 
-// GetBalance 获取用户余额
-func (s *UserService) GetBalance(ctx context.Context, userID uint) (float64, error) {
-	var user model.User
-	if err := s.db.First(&user, userID).Error; err != nil {
-		return 0, err
-	}
-	return user.Balance, nil
-}
-
 // GetPoints 获取用户积分
 func (s *UserService) GetPoints(ctx context.Context, userID uint) (int, error) {
 	var user model.User
@@ -55,4 +46,9 @@ func (s *UserService) GetPoints(ctx context.Context, userID uint) (int, error) {
 		return 0, err
 	}
 	return user.Points, nil
+}
+
+// AddPoints 增加积分
+func (s *UserService) AddPoints(ctx context.Context, userID uint, points int) error {
+	return s.db.Model(&model.User{}).Where("id = ?", userID).UpdateColumn("points", gorm.Expr("points + ?", points)).Error
 }

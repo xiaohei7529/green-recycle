@@ -42,7 +42,6 @@ func (h *UserHandler) GetProfile(c *gin.Context) {
 			"phone":    user.Phone,
 			"nickname": user.Nickname,
 			"avatar":   user.Avatar,
-			"balance":  user.Balance,
 			"points":   user.Points,
 		},
 	})
@@ -74,29 +73,6 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
 		"message": "更新成功",
-	})
-}
-
-// GetBalance 获取用户余额
-func (h *UserHandler) GetBalance(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "未登录"})
-		return
-	}
-
-	balance, err := h.userService.GetBalance(c.Request.Context(), userID.(uint))
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"code": 404, "message": "用户不存在"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "获取成功",
-		"data": gin.H{
-			"balance": balance,
-		},
 	})
 }
 
