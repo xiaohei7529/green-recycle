@@ -228,7 +228,8 @@ func (s *OrderService) CompleteOrder(orderID uint, recyclerID uint, actualWeight
 func (s *OrderService) pushNewOrderNotification(ctx context.Context, order *model.Order) {
 	// 将新订单推送到 Redis，供附近回收员获取
 	key := fmt.Sprintf("new_orders:%s", order.District)
-	s.rdb.LPush(ctx, key, order.ID).Expire(ctx, key, time.Hour*24)
+	s.rdb.LPush(ctx, key, order.ID)
+	s.rdb.Expire(ctx, key, time.Hour*24)
 }
 
 // randomString 生成随机字符串
