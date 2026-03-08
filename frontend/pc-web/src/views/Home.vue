@@ -10,7 +10,7 @@
             <button class="btn-primary" @click="createOrder">立即回收</button>
           </div>
           <div class="hero-image">
-            <img src="/images/recycle-hero.png" alt="智能回收" />
+            <img src="/images/recycle-hero.svg" alt="智能回收" />
           </div>
         </div>
       </div>
@@ -137,19 +137,19 @@ export default {
           user: '张先生',
           location: '北京市朝阳区',
           content: '非常方便，回收员准时上门，价格透明，积分还能兑换礼品！',
-          avatar: '/avatars/user1.png'
+          avatar: '/avatars/user1.svg'
         },
         {
           user: '李女士',
           location: '上海市浦东新区',
           content: '家里堆积的废品终于有地方处理了，环保又有收益，强烈推荐！',
-          avatar: '/avatars/user2.png'
+          avatar: '/avatars/user2.svg'
         },
         {
           user: '王经理',
           location: '广州市天河区',
           content: '公司定期使用企业回收服务，专业高效，为环保出一份力！',
-          avatar: '/avatars/user3.png'
+          avatar: '/avatars/user3.svg'
         }
       ]
     }
