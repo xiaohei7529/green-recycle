@@ -35,15 +35,22 @@ func main() {
 
 	// 初始化服务
 	userService := service.NewUserService(db, rdb)
-	authService := service.NewAuthService(db, rdb)
+	authService := service.NewAuthService(db, rdb, os.Getenv("JWT_SECRET"))
 	orderService := service.NewOrderService(db, rdb)
 	priceService := service.NewPriceService(db)
+	captchaService, err := service.NewCaptchaService(rdb)
+	if err != nil {
+		log.Printf("Warning: Captcha service initialization failed: %v", err)
+	}
+	passwordResetService := service.NewPasswordResetService(db, rdb, os.Getenv("JWT_SECRET"))
 
 	// 初始化处理器
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
 	orderHandler := handler.NewOrderHandler(orderService)
 	priceHandler := handler.NewPriceHandler(priceService)
+	captchaHandler := handler.NewCaptchaHandler(captchaService)
+	passwordResetHandler := handler.NewPasswordResetHandler(passwordResetService)
 
 	// 初始化 Gin 路由
 	r := gin.Default()
@@ -62,6 +69,26 @@ func main() {
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/wechat", authHandler.WechatLogin)
+			auth.POST("/refresh", authHandler.RefreshToken)
+			
+			// 密码重置
+			auth.POST("/password/reset/request", passwordResetHandler.RequestReset)
+			auth.POST("/password/reset/verify", passwordResetHandler.VerifyResetToken)
+			auth.POST("/password/reset", passwordResetHandler.ResetPassword)
+		}
+
+		// 验证码接口（公开）
+		captcha := v1.Group("/captcha")
+		{
+			captcha.GET("/:captchaID", captchaHandler.GenerateCaptcha)
+			captcha.POST("/verify", captchaHandler.VerifyCaptcha)
+		}
+
+		// 短信接口（公开）
+		sms := v1.Group("/sms")
+		{
+			sms.POST("/send", captchaHandler.SendSMSCode)
+			sms.POST("/verify", captchaHandler.VerifySMSCode)
 		}
 
 		// 用户接口（需要认证）
