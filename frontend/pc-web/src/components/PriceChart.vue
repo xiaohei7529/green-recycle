@@ -6,25 +6,40 @@
         <button 
           :class="{ active: timeRange === '7d' }" 
           @click="setTimeRange('7d')"
+          :disabled="loading"
         >
           7 天
         </button>
         <button 
           :class="{ active: timeRange === '30d' }" 
           @click="setTimeRange('30d')"
+          :disabled="loading"
         >
           30 天
         </button>
         <button 
           :class="{ active: timeRange === '90d' }" 
           @click="setTimeRange('90d')"
+          :disabled="loading"
         >
           90 天
         </button>
       </div>
     </div>
     
-    <div ref="chartRef" class="chart-container"></div>
+    <div class="chart-wrapper">
+      <div v-if="loading" class="chart-loading">
+        <span class="loading-spinner">⟳</span>
+        <span>加载中...</span>
+      </div>
+      
+      <div v-if="error" class="chart-error">
+        <span>⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+      
+      <div ref="chartRef" class="chart-container" :style="{ opacity: loading ? 0.5 : 1 }"></div>
+    </div>
     
     <div class="chart-footer">
       <div class="category-legend">
@@ -43,6 +58,7 @@
 
 <script>
 import { markRaw } from 'vue'
+import priceApi from '@/api/price'
 
 export default {
   name: 'PriceChart',
@@ -61,7 +77,9 @@ export default {
         '7d': [],
         '30d': [],
         '90d': []
-      }
+      },
+      loading: false,
+      error: null
     }
   },
   mounted() {
@@ -181,31 +199,55 @@ export default {
     },
     
     async loadData() {
-      // TODO: 从 API 加载实际数据
-      // 模拟数据
-      const days = this.timeRange === '7d' ? 7 : this.timeRange === '30d' ? 30 : 90
-      const dates = []
-      const now = new Date()
+      this.loading = true
+      this.error = null
       
-      for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(now)
-        date.setDate(date.getDate() - i)
-        dates.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }))
+      try {
+        // 调用真实 API
+        const data = await priceApi.getAllCategoriesTrend(this.timeRange)
+        
+        // 解析 API 返回数据
+        // 假设 API 返回格式：{ dates: [...], series: [{name, data}, ...] }
+        const dates = data.dates || []
+        const series = data.series || []
+        
+        this.chart.setOption({
+          xAxis: { data: dates },
+          series: this.categories.map((cat, idx) => ({
+            name: cat.name,
+            data: series[idx]?.data || []
+          }))
+        })
+      } catch (err) {
+        console.error('加载价格趋势失败:', err)
+        this.error = '加载失败，显示模拟数据'
+        
+        // 降级到模拟数据
+        const days = this.timeRange === '7d' ? 7 : this.timeRange === '30d' ? 30 : 90
+        const dates = []
+        const now = new Date()
+        
+        for (let i = days - 1; i >= 0; i--) {
+          const date = new Date(now)
+          date.setDate(date.getDate() - i)
+          dates.push(date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }))
+        }
+        
+        const basePrices = [1.5, 2.0, 3.5, 0.8, 2.5]
+        const seriesData = this.categories.map((cat, idx) => {
+          return basePrices[idx] + Array(days).fill(0).map(() => (Math.random() - 0.5) * 0.3)
+        })
+        
+        this.chart.setOption({
+          xAxis: { data: dates },
+          series: this.categories.map((cat, idx) => ({
+            name: cat.name,
+            data: seriesData[idx].map((price, i) => +(price + (i * 0.01)).toFixed(2))
+          }))
+        })
+      } finally {
+        this.loading = false
       }
-      
-      // 生成模拟数据
-      const basePrices = [1.5, 2.0, 3.5, 0.8, 2.5]
-      const seriesData = this.categories.map((cat, idx) => {
-        return basePrices[idx] + Array(days).fill(0).map(() => (Math.random() - 0.5) * 0.3)
-      })
-      
-      this.chart.setOption({
-        xAxis: { data: dates },
-        series: this.categories.map((cat, idx) => ({
-          name: cat.name,
-          data: seriesData[idx].map((price, i) => +(price + (i * 0.01)).toFixed(2))
-        }))
-      })
     },
     
     setTimeRange(range) {
@@ -271,9 +313,49 @@ export default {
   border-color: #10B981;
 }
 
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
+
 .chart-container {
   width: 100%;
   height: 300px;
+  transition: opacity 0.3s ease;
+}
+
+.chart-loading,
+.chart-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 1rem;
+  color: #6B7280;
+}
+
+.chart-loading .loading-spinner {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.chart-error {
+  color: #EF4444;
+}
+
+.chart-error span:first-child {
+  font-size: 2rem;
 }
 
 .chart-footer {
