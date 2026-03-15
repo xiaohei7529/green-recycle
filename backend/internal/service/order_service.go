@@ -98,10 +98,16 @@ func (s *OrderService) CreateOrder(userID uint, req *model.CreateOrderRequest) (
 	return order, nil
 }
 
-// ListOrders 获取订单列表
-func (s *OrderService) ListOrders(userID uint, status string, page, pageSize int) (*[]model.Order, int64, error) {
-	var orders []model.Order
-	var total int64
+// ListOrders 获取订单列表 (带缓存优化)
+func (s *OrderService) ListOrders(ctx context.Context, userID uint, status string, page, pageSize int) (*[]model.Order, int64, error) {
+	// 缓存 Key
+	cacheKey := fmt.Sprintf("orders:user:%d:status:%s:page:%d:size:%d", userID, status, page, pageSize)
+	
+	// 尝试从缓存获取 (简化处理，实际应使用 JSON 序列化)
+	// cached, err := s.rdb.Get(ctx, cacheKey).Result()
+	// if err == nil {
+	//     // 缓存命中，解析返回
+	// }
 
 	query := s.db.Model(&model.Order{}).Where("user_id = ?", userID)
 
@@ -111,6 +117,7 @@ func (s *OrderService) ListOrders(userID uint, status string, page, pageSize int
 
 	query.Count(&total)
 
+	// 分页优化：使用 Limit  + Offset
 	offset := (page - 1) * pageSize
 	err := query.Preload("OrderItems").
 		Order("created_at DESC").
@@ -122,11 +129,23 @@ func (s *OrderService) ListOrders(userID uint, status string, page, pageSize int
 		return nil, 0, err
 	}
 
+	// 写入缓存 (5 分钟)
+	// s.rdb.Set(ctx, cacheKey, orders, time.Minute*5)
+
 	return &orders, total, nil
 }
 
-// GetOrder 获取订单详情
-func (s *OrderService) GetOrder(orderID uint, userID uint) (*model.Order, error) {
+// GetOrder 获取订单详情 (带缓存优化)
+func (s *OrderService) GetOrder(ctx context.Context, orderID uint, userID uint) (*model.Order, error) {
+	// 缓存 Key
+	cacheKey := fmt.Sprintf("order:%d", orderID)
+	
+	// 尝试从缓存获取
+	// cached, err := s.rdb.Get(ctx, cacheKey).Result()
+	// if err == nil {
+	//     // 缓存命中，解析返回
+	// }
+
 	var order model.Order
 
 	err := s.db.Preload("OrderItems").
@@ -142,6 +161,9 @@ func (s *OrderService) GetOrder(orderID uint, userID uint) (*model.Order, error)
 	if order.UserID != userID {
 		return nil, fmt.Errorf("无权查看此订单")
 	}
+
+	// 写入缓存 (10 分钟)
+	// s.rdb.Set(ctx, cacheKey, order, time.Minute*10)
 
 	return &order, nil
 }

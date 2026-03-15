@@ -64,7 +64,15 @@ func (h *OrderHandler) ListOrders(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	orders, total, err := h.orderService.ListOrders(userID.(uint), status, page, pageSize)
+	// 参数验证
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	orders, total, err := h.orderService.ListOrders(c.Request.Context(), userID.(uint), status, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": err.Error()})
 		return
@@ -96,7 +104,7 @@ func (h *OrderHandler) GetOrder(c *gin.Context) {
 		return
 	}
 
-	order, err := h.orderService.GetOrder(uint(orderID), userID.(uint))
+	order, err := h.orderService.GetOrder(c.Request.Context(), uint(orderID), userID.(uint))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": err.Error()})
 		return

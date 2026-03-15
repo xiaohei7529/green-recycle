@@ -28,13 +28,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误：" + err.Error()})
 		return
 	}
 
 	// TODO: 验证短信验证码
 
-	user, err := h.authService.Register(req.Phone, req.Password)
+	user, err := h.authService.Register(c.Request.Context(), req.Phone, req.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": err.Error()})
 		return
@@ -46,6 +46,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		"data": gin.H{
 			"user_id": user.ID,
 			"phone":   user.Phone,
+			"nickname": user.Nickname,
 		},
 	})
 }
@@ -54,15 +55,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		Phone    string `json:"phone" binding:"required,len=11"`
-		Password string `json:"password" binding:"required"`
+		Password string `json:"password" binding:"required,min=6"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误"})
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误：" + err.Error()})
 		return
 	}
 
-	token, err := h.authService.Login(req.Phone, req.Password)
+	token, err := h.authService.Login(c.Request.Context(), req.Phone, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": err.Error()})
 		return
@@ -73,7 +74,36 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"message": "登录成功",
 		"data": gin.H{
 			"token":      token,
+			"expires_in": 86400, // 24 小时
+			"token_type": "Bearer",
+		},
+	})
+}
+
+// RefreshToken 刷新 Token
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var req struct {
+		Token string `json:"token" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误"})
+		return
+	}
+
+	newToken, err := h.authService.RefreshToken(req.Token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "刷新成功",
+		"data": gin.H{
+			"token":      newToken,
 			"expires_in": 86400,
+			"token_type": "Bearer",
 		},
 	})
 }
