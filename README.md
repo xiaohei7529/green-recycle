@@ -48,52 +48,47 @@
 | 📋 订单管理 | 接单/拒单/完成订单 |
 | 🗺️ 路线规划 | 智能规划最优回收路线 |
 | 💵 收益统计 | 每日/周/月收益报表 |
-| ⭐ 评价系统 | 用户评价，提升服务质量 |
-| 📍 位置打卡 | 上门打卡，确保服务到位 |
 
-### 管理后台
+### 管理端
 | 功能 | 说明 |
 |------|------|
-| 📊 数据看板 | 实时订单、收益、用户数据 |
-| 👥 用户管理 | 用户/回收员信息管理 |
-| 📦 订单管理 | 全平台订单统一管理 |
-| 💰 价格管理 | 废品价格实时调整 |
-| 📈 报表分析 | 多维度数据分析报表 |
+| 📊 数据看板 | 回收数据实时统计 |
+| 👥 用户管理 | 用户和回收员管理 |
+| 📦 废品管理 | 废品分类和价格管理 |
+| 📈 报表分析 | 业务数据分析 |
 
 ---
 
-## 🏗️ 技术架构
+## 📊 开发状态
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      前端展示层                              │
-├─────────────┬─────────────┬─────────────┬───────────────────┤
-│   PC Web    │  移动端 H5   │   小程序     │      APP          │
-│  (Vue3)     │  (Vue3)     │ (Uni-app)   │   (Flutter)       │
-└─────────────┴─────────────┴─────────────┴───────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      API 网关层                               │
-│                        (Go)                                  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      后端服务层                              │
-├─────────────┬─────────────┬─────────────┬───────────────────┤
-│  用户服务    │  订单服务    │  支付服务    │    消息服务        │
-│   (Go)      │   (Go)      │   (Go)      │     (Go)          │
-└─────────────┴─────────────┴─────────────┴───────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      数据存储层                              │
-├─────────────┬─────────────┬─────────────┬───────────────────┤
-│   MySQL     │   Redis     │  MongoDB    │   MinIO           │
-│  (主数据库)  │  (缓存)     │  (日志)     │  (文件存储)        │
-└─────────────┴─────────────┴─────────────┴───────────────────┘
-```
+**当前版本**: v1.0.0  
+**开发状态**: 🟢 正常开发  
+**最后更新**: 2026-03-15
+
+### 本周进展 (2026-03-09 至 2026-03-15)
+
+**核心成就**:
+- ✅ 自主开发工作流建立
+- ✅ 每日报告机制完善
+- ✅ v1.1.0 规划完成
+- ✅ 文档体系完善
+
+**Git 统计**:
+- 本周提交：18 次
+- 代码行数：1000+ 行
+- 文档数量：12 份
+
+**已完成功能**:
+- ✅ 项目基础架构
+- ✅ 后端 API
+- ✅ 前端 UI
+- ✅ 每日报告机制
+
+**下周计划 (v1.1.0)**:
+- [ ] 后端 API 优化
+- [ ] 前端 UI 改进
+- [ ] 用户认证优化
+- [ ] 数据可视化
 
 ---
 
@@ -101,147 +96,120 @@
 
 ```
 green-recycle/
-├── docs/                      # 文档目录
-│   ├── operation-guide.md     # 操作文档
-│   ├── deployment-guide.md    # 部署文档
-│   ├── api-reference.md       # API 文档
-│   └── faq.md                 # 常见问题
-├── backend/                   # 后端服务 (Go)
-│   ├── cmd/                   # 可执行文件
-│   ├── internal/              # 内部包
-│   │   ├── handler/           # HTTP 处理器
-│   │   ├── service/           # 业务逻辑
-│   │   ├── model/             # 数据模型
-│   │   └── repository/        # 数据访问
-│   ├── pkg/                   # 公共包
-│   ├── configs/               # 配置文件
-│   └── scripts/               # 脚本
-├── frontend/                  # 前端项目
-│   ├── pc-web/               # PC 端 (Vue3)
-│   ├── mobile-web/           # 移动端 H5 (Vue3)
-│   ├── mini-program/         # 小程序 (Uni-app)
-│   └── app/                  # APP (Flutter)
-├── admin/                     # 管理后台 (Vue3 + Element Plus)
-├── docker/                    # Docker 配置
-├── scripts/                   # 部署脚本
-└── tests/                     # 测试文件
+├── frontend/         # 前端应用
+│   └── app/          # Vue 应用
+├── backend/          # 后端 API
+│   └── api/          # Go API
+├── docs/             # 文档
+├── reports/          # 报告
+└── scripts/          # 脚本
 ```
+
+---
+
+## 🛠️ 技术栈
+
+### 前端
+- **框架**: Vue 3.4
+- **UI 库**: Element Plus 2.5
+- **构建**: Vite 5.0
+
+### 后端
+- **语言**: Go 1.21+ / PHP 8.2+
+- **框架**: Gin / Laravel
+- **数据库**: MySQL/SQLite
+
+### 部署
+- **Docker**: 容器化部署
+- **Nginx**: Web 服务器
+
+---
+
+## 📖 文档导航
+
+| 文档 | 说明 |
+|------|------|
+| [快速开始](docs/QUICKSTART.md) | 5 分钟快速上手 |
+| [启动指南](START.md) | 详细启动步骤 |
+| [自主开发流程](docs/AUTONOMOUS_DEV_WORKFLOW.md) | 自主开发工作流 |
+| [API 文档](docs/api-reference.md) | API 接口参考 |
+| [运营指南](docs/operation-guide.md) | 运营操作指南 |
+| [v1.1.0 规划](docs/v1.1.0-plan.md) | 下版本开发计划 |
 
 ---
 
 ## 🚀 快速开始
 
-### 环境要求
-
-| 软件 | 版本 | 说明 |
-|------|------|------|
-| Go | 1.21+ | 后端服务 |
-| PHP | 8.2+ | 可选，部分服务 |
-| Node.js | 18+ | 前端构建 |
-| MySQL | 8.0+ | 主数据库 |
-| Redis | 7.0+ | 缓存服务 |
-| Docker | 24+ | 容器化部署 |
-
-### 本地开发
+### Docker 部署 (推荐)
 
 ```bash
 # 1. 克隆项目
 git clone https://github.com/xiaohei7529/green-recycle.git
 cd green-recycle
 
-# 2. 启动后端服务
-cd backend
-go run cmd/main.go
-
-# 3. 启动前端
-cd frontend/pc-web
-npm install
-npm run dev
-
-# 4. 启动管理后台
-cd admin
-npm install
-npm run dev
-```
-
-### Docker 部署
-
-```bash
-# 一键部署
+# 2. 启动服务
 docker-compose up -d
 
-# 查看状态
-docker-compose ps
-
-# 查看日志
-docker-compose logs -f
+# 3. 访问应用
+# http://localhost:8080
 ```
 
----
+### 本地开发
 
-## 📖 详细文档
+```bash
+# 1. 安装依赖
+composer install
+npm install
 
-| 文档 | 说明 | 链接 |
-|------|------|------|
-| 📘 操作文档 | 用户/回收员/管理员操作指南 | [docs/operation-guide.md](docs/operation-guide.md) |
-| 📗 部署文档 | 生产环境部署步骤 | [docs/deployment-guide.md](docs/deployment-guide.md) |
-| 📙 API 文档 | 完整 API 接口说明 | [docs/api-reference.md](docs/api-reference.md) |
-| ❓ 常见问题 | 常见问题解答 | [docs/faq.md](docs/faq.md) |
+# 2. 配置环境变量
+cp .env.example .env
 
----
+# 3. 启动服务
+php artisan serve
+npm run dev
 
-## 🎨 界面预览
-
-### 用户端
-- 📱 首页：附近回收点、快速下单
-- 📦 订单：订单列表、订单详情
-- 💰 价格：废品价格列表
-- 👤 我的：个人信息、回收记录
-
-### 回收员端
-- 📋 订单：待接单、进行中、已完成
-- 🗺️ 路线：智能路线规划
-- 💵 收益：收益统计
-- ⭐ 评价：用户评价
-
-### 管理后台
-- 📊 数据看板：实时数据
-- 👥 用户管理：用户列表
-- 📦 订单管理：订单列表
-- 💰 价格管理：价格配置
+# 4. 访问应用
+# http://localhost:8000
+```
 
 ---
 
 ## 🤝 贡献指南
 
-欢迎贡献代码！请遵循以下步骤：
+欢迎贡献代码、文档或建议！
 
 1. Fork 本项目
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+3. 提交变更 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+5. 提交 Pull Request
 
 ---
 
 ## 📄 开源协议
 
-本项目采用 [MIT](LICENSE) 协议开源
-
----
-
-## 📞 联系方式
-
-- 📧 Email: xiaohei7529@gmail.com
-- 💬 Issues: [GitHub Issues](https://github.com/xiaohei7529/green-recycle/issues)
-- 📖 Wiki: [项目 Wiki](https://github.com/xiaohei7529/green-recycle/wiki)
+本项目采用 MIT 协议开源 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
 ---
 
 ## 🙏 致谢
 
-感谢所有为本项目做出贡献的开发者！
+感谢以下开源项目：
+- [Vue.js](https://vuejs.org/)
+- [Element Plus](https://element-plus.org/)
+- [Laravel](https://laravel.com/)
+- [Gin](https://gin-gonic.com/)
 
 ---
 
-**Made with ❤️ by Green Recycle Team**
+## 📞 联系方式
+
+- **GitHub**: https://github.com/xiaohei7529/green-recycle
+- **Issues**: https://github.com/xiaohei7529/green-recycle/issues
+- **Email**: xiaohei7529@gmail.com
+
+---
+
+*Green Recycle v1.0.0 - 让回收更简单，让环境更美好！* ♻️
+
+**最后更新**: 2026-03-15
