@@ -1,9 +1,9 @@
 # ♻️ Green Recycle - 智能废品回收平台
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](README.md)
-[![PHP](https://img.shields.io/badge/PHP-8.2+-purple.svg)](https://php.net)
+[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](README.md)
 [![Go](https://img.shields.io/badge/Go-1.21+-cyan.svg)](https://go.dev)
+[![Vue](https://img.shields.io/badge/Vue-3.4+-emerald.svg)](https://vuejs.org)
 
 > 🌍 让回收更简单，让环境更美好
 
@@ -115,8 +115,8 @@ green-recycle/
 - **构建**: Vite 5.0
 
 ### 后端
-- **语言**: Go 1.21+ / PHP 8.2+
-- **框架**: Gin / Laravel
+- **语言**: Go 1.21+
+- **框架**: Gin
 - **数据库**: MySQL/SQLite
 
 ### 部署
@@ -156,20 +156,52 @@ docker-compose up -d
 
 ### 本地开发
 
+#### 后端 (Go)
+
 ```bash
-# 1. 安装依赖
-composer install
+# 1. 进入后端目录
+cd backend
+
+# 2. 安装依赖
+go mod download
+
+# 3. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，配置数据库连接等
+
+# 4. 启动后端服务
+go run main.go
+
+# 5. 访问 API
+# http://localhost:8080/api
+```
+
+#### 前端 (Vue 3)
+
+```bash
+# 1. 进入前端目录
+cd frontend/pc-web
+
+# 2. 安装依赖
 npm install
 
-# 2. 配置环境变量
-cp .env.example .env
-
-# 3. 启动服务
-php artisan serve
+# 3. 启动开发服务器
 npm run dev
 
 # 4. 访问应用
-# http://localhost:8000
+# http://localhost:5173
+```
+
+#### 构建生产版本
+
+```bash
+# 后端构建
+cd backend
+go build -o green-recycle
+
+# 前端构建
+cd frontend/pc-web
+npm run build
 ```
 
 ---
@@ -197,8 +229,8 @@ npm run dev
 感谢以下开源项目：
 - [Vue.js](https://vuejs.org/)
 - [Element Plus](https://element-plus.org/)
-- [Laravel](https://laravel.com/)
 - [Gin](https://gin-gonic.com/)
+- [GORM](https://gorm.io/)
 
 ---
 
@@ -210,6 +242,7 @@ npm run dev
 
 ---
 
-*Green Recycle v1.0.0 - 让回收更简单，让环境更美好！* ♻️
+*Green Recycle v1.1.0 - 让回收更简单，让环境更美好！* ♻️
 
-**最后更新**: 2026-03-15
+**技术栈**: Go + Vue 3  
+**最后更新**: 2026-03-16
