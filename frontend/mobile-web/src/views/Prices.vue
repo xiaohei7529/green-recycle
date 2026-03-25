@@ -1,91 +1,92 @@
 <template>
   <div class="prices">
+    <van-nav-bar title="回收价格" />
+
     <van-notice-bar
       left-icon="info-o"
-      text="价格每日更新，仅供参考"
+      text="价格每日更新，仅供参考，实际以回收员确认为准"
       class="notice"
     />
 
-    <van-collapse v-model="activeNames">
-      <van-collapse-item title="📰 纸类" name="1">
+    <van-loading v-if="loading" class="page-loading" size="40" vertical>加载中...</van-loading>
+
+    <van-collapse v-else v-model="activeNames">
+      <van-collapse-item
+        v-for="cat in categories"
+        :key="cat.name"
+        :title="getCategoryTitle(cat.name)"
+        :name="cat.name"
+      >
         <van-cell
-          v-for="item in prices.paper"
+          v-for="item in cat.items"
           :key="item.name"
           :title="item.name"
-          :value="`¥${item.price}/${item.unit}`"
-          value-class="price-value"
-        />
-      </van-collapse-item>
-      <van-collapse-item title="🥤 塑料" name="2">
-        <van-cell
-          v-for="item in prices.plastic"
-          :key="item.name"
-          :title="item.name"
-          :value="`¥${item.price}/${item.unit}`"
-          value-class="price-value"
-        />
-      </van-collapse-item>
-      <van-collapse-item title="🥫 金属" name="3">
-        <van-cell
-          v-for="item in prices.metal"
-          :key="item.name"
-          :title="item.name"
-          :value="`¥${item.price}/${item.unit}`"
-          value-class="price-value"
-        />
-      </van-collapse-item>
-      <van-collapse-item title="🔌 电器" name="4">
-        <van-cell
-          v-for="item in prices.electronic"
-          :key="item.name"
-          :title="item.name"
-          :value="`¥${item.price}/${item.unit}`"
+          :value="`¥${item.price}/${item.unit || 'kg'}`"
           value-class="price-value"
         />
       </van-collapse-item>
     </van-collapse>
+
+    <van-empty v-if="!loading && categories.length === 0" description="暂无价格信息" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { VanNoticeBar, VanCollapse, VanCollapseItem, VanCell } from 'vant'
+import { ref, onMounted } from 'vue'
+import { showFailToast } from 'vant'
+import { fetchPrices } from '@/api/prices'
 
-const activeNames = ref(['1'])
+const CATEGORY_ICONS = {
+  '纸类': '📰', '塑料': '🥤', '金属': '🥫', '电器': '🔌',
+  '玻璃': '🫙', '纺织': '👕'
+}
 
-const prices = ref({
-  paper: [
-    { name: '报纸', price: 1.5, unit: 'kg' },
-    { name: '纸箱', price: 1.2, unit: 'kg' },
-    { name: '书本', price: 1.8, unit: 'kg' }
-  ],
-  plastic: [
-    { name: 'PET 瓶', price: 2.0, unit: 'kg' },
-    { name: 'PE 膜', price: 3.5, unit: 'kg' }
-  ],
-  metal: [
-    { name: '铁', price: 3.5, unit: 'kg' },
-    { name: '铝', price: 12.0, unit: 'kg' },
-    { name: '铜', price: 45.0, unit: 'kg' }
-  ],
-  electronic: [
-    { name: '空调', price: 150.0, unit: '台' },
-    { name: '冰箱', price: 100.0, unit: '台' }
-  ]
-})
+const loading = ref(true)
+const categories = ref([])
+const activeNames = ref([])
+
+const getCategoryTitle = (name) => {
+  const icon = CATEGORY_ICONS[name] || '♻️'
+  return `${icon} ${name}`
+}
+
+const loadPrices = async () => {
+  loading.value = true
+  try {
+    const res = await fetchPrices('all')
+    categories.value = res.data?.categories || []
+    // 默认展开第一个分类
+    if (categories.value.length > 0) {
+      activeNames.value = [categories.value[0].name]
+    }
+  } catch (err) {
+    showFailToast(err.message || '获取价格失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadPrices)
 </script>
 
 <style scoped>
 .prices {
-  padding: 10px;
+  min-height: 100vh;
+  background: #f5f5f5;
 }
 
 .notice {
-  margin-bottom: 10px;
+  margin: 8px 0;
 }
 
-.price-value {
-  color: #f56c6c;
+.page-loading {
+  display: flex;
+  justify-content: center;
+  padding-top: 80px;
+}
+
+:deep(.price-value) {
+  color: #ee0a24;
   font-weight: bold;
 }
 </style>

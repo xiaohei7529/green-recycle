@@ -1,7 +1,5 @@
 <template>
   <div class="prices-page">
-    <!-- 导航栏 -->
-    <NavBar />
     
     <!-- 页面头部 -->
     <section class="page-header">
@@ -118,62 +116,63 @@
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'
+import { fetchPrices } from '@/api/prices'
+
+const CATEGORY_ICONS = {
+  '纸类': '📰', '塑料': '🥤', '金属': '🔩', '玻璃': '🫙', '纺织': '👕', '电器': '📺'
+}
+
+const FILTER_CATEGORY_MAP = {
+  paper: '纸类', plastic: '塑料', metal: '金属', glass: '玻璃', textile: '纺织'
+}
 
 export default {
   name: 'PricesPage',
-  components: {
-    NavBar
-  },
   data() {
     return {
       activeFilter: 'all',
-      prices: [
-        // 纸类
-        { id: 1, category: '纸类', name: '报纸', price: 1.5, change: 5, icon: '📰', updateTime: '2026-03-08 08:00' },
-        { id: 2, category: '纸类', name: '纸箱', price: 1.2, change: -3, icon: '📦', updateTime: '2026-03-08 08:00' },
-        { id: 3, category: '纸类', name: '书本', price: 1.8, change: 2, icon: '📚', updateTime: '2026-03-08 08:00' },
-        { id: 4, category: '纸类', name: '纸板', price: 1.0, change: 0, icon: '🗂️', updateTime: '2026-03-08 08:00' },
-        
-        // 塑料
-        { id: 5, category: '塑料', name: 'PET 瓶', price: 2.0, change: 8, icon: '🥤', updateTime: '2026-03-08 08:00' },
-        { id: 6, category: '塑料', name: '塑料桶', price: 2.5, change: 3, icon: '🪣', updateTime: '2026-03-08 08:00' },
-        { id: 7, category: '塑料', name: '塑料袋', price: 1.5, change: -5, icon: '🛍️', updateTime: '2026-03-08 08:00' },
-        
-        // 金属
-        { id: 8, category: '金属', name: '铁', price: 3.5, change: 1, icon: '🔩', updateTime: '2026-03-08 08:00' },
-        { id: 9, category: '金属', name: '铜', price: 45.0, change: 2, icon: '🔶', updateTime: '2026-03-08 08:00' },
-        { id: 10, category: '金属', name: '铝', price: 12.0, change: -1, icon: '🥫', updateTime: '2026-03-08 08:00' },
-        { id: 11, category: '金属', name: '不锈钢', price: 8.0, change: 0, icon: '🍴', updateTime: '2026-03-08 08:00' },
-        
-        // 玻璃
-        { id: 12, category: '玻璃', name: '玻璃瓶', price: 0.8, change: 0, icon: '🫙', updateTime: '2026-03-08 08:00' },
-        { id: 13, category: '玻璃', name: '平板玻璃', price: 1.2, change: -2, icon: '🪟', updateTime: '2026-03-08 08:00' },
-        
-        // 纺织
-        { id: 14, category: '纺织', name: '旧衣服', price: 3.0, change: 5, icon: '👕', updateTime: '2026-03-08 08:00' },
-        { id: 15, category: '纺织', name: '床单被罩', price: 2.5, change: 3, icon: '🛏️', updateTime: '2026-03-08 08:00' },
-      ]
+      loading: false,
+      prices: []
     }
   },
   computed: {
     filteredPrices() {
-      if (this.activeFilter === 'all') {
-        return this.prices
-      }
-      return this.prices.filter(price => price.category === this.getCategory(this.activeFilter))
+      if (this.activeFilter === 'all') return this.prices
+      const cat = FILTER_CATEGORY_MAP[this.activeFilter]
+      return this.prices.filter(p => p.category === cat)
     }
   },
+  async created() {
+    await this.loadPrices()
+  },
   methods: {
-    getCategory(filter) {
-      const map = {
-        'paper': '纸类',
-        'plastic': '塑料',
-        'metal': '金属',
-        'glass': '玻璃',
-        'textile': '纺织'
+    async loadPrices() {
+      this.loading = true
+      try {
+        const res = await fetchPrices('all')
+        const categories = res.data?.categories || []
+        let idCounter = 1
+        const flat = []
+        categories.forEach(cat => {
+          (cat.items || []).forEach(item => {
+            flat.push({
+              id: idCounter++,
+              category: cat.name,
+              name: item.name,
+              price: item.price,
+              unit: item.unit || 'kg',
+              change: 0,
+              icon: CATEGORY_ICONS[cat.name] || '♻️',
+              updateTime: item.updated || res.data?.updated_at || '-'
+            })
+          })
+        })
+        this.prices = flat
+      } catch (err) {
+        console.error('获取价格失败:', err.message)
+      } finally {
+        this.loading = false
       }
-      return map[filter] || ''
     }
   }
 }
@@ -183,7 +182,6 @@ export default {
 .prices-page {
   min-height: 100vh;
   background: #F9FAFB;
-  padding-top: 70px;
 }
 
 .container {

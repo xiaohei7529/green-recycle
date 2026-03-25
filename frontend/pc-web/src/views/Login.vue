@@ -1,7 +1,5 @@
 <template>
   <div class="login-page">
-    <!-- 导航栏 -->
-    <NavBar />
     
     <!-- 登录卡片 -->
     <section class="login-section">
@@ -64,9 +62,12 @@
               </router-link>
             </div>
 
+            <!-- 错误提示 -->
+            <div v-if="errorMsg" class="error-msg">{{ errorMsg }}</div>
+
             <!-- 登录按钮 -->
-            <button type="submit" class="btn-login">
-              登录
+            <button type="submit" class="btn-login" :disabled="loading">
+              {{ loading ? '登录中...' : '登录' }}
             </button>
 
             <!-- 其他登录方式 -->
@@ -118,16 +119,16 @@
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'
+import { loginUser } from '@/api/auth'
+import { useAuthStore } from '@/stores/auth'
 
 export default {
   name: 'LoginPage',
-  components: {
-    NavBar
-  },
   data() {
     return {
       showPassword: false,
+      loading: false,
+      errorMsg: '',
       loginForm: {
         phone: '',
         password: '',
@@ -136,16 +137,30 @@ export default {
     }
   },
   methods: {
-    handleLogin() {
-      console.log('登录:', this.loginForm)
-      // TODO: 实现登录逻辑
-      this.$router.push('/')
+    async handleLogin() {
+      this.errorMsg = ''
+      if (!this.loginForm.phone || !this.loginForm.password) {
+        this.errorMsg = '请填写手机号和密码'
+        return
+      }
+      this.loading = true
+      try {
+        const res = await loginUser(this.loginForm.phone, this.loginForm.password)
+        const authStore = useAuthStore()
+        authStore.setAuth(res.data.token, null)
+        const redirect = this.$route.query.redirect || '/'
+        this.$router.push(redirect)
+      } catch (err) {
+        this.errorMsg = err.message
+      } finally {
+        this.loading = false
+      }
     },
     wechatLogin() {
-      console.log('微信登录')
+      this.errorMsg = '微信登录功能即将上线，敬请期待'
     },
     alipayLogin() {
-      console.log('支付宝登录')
+      this.errorMsg = '支付宝登录功能即将上线，敬请期待'
     }
   }
 }
@@ -155,7 +170,6 @@ export default {
 .login-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
-  padding-top: 70px;
 }
 
 .container {
@@ -321,6 +335,21 @@ export default {
 
 .btn-login:active {
   transform: translateY(0);
+}
+
+.btn-login:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.error-msg {
+  padding: 12px 16px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  color: #DC2626;
+  font-size: 0.9rem;
 }
 
 /* Divider */

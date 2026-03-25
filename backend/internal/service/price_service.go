@@ -20,23 +20,86 @@ func NewPriceService(db *gorm.DB) *PriceService {
 
 // PriceCategory 价格分类
 type PriceCategory struct {
-	Name  string       `json:"name"`
-	Items []PriceItem  `json:"items"`
+	Name  string      `json:"name"`
+	Items []PriceItem `json:"items"`
 }
 
 // PriceItem 价格项目
 type PriceItem struct {
-	Name     string  `json:"name"`
-	Price    float64 `json:"price"`
-	Unit     string  `json:"unit"`
-	Updated  string  `json:"updated"`
+	Name    string  `json:"name"`
+	Price   float64 `json:"price"`
+	Unit    string  `json:"unit"`
+	Updated string  `json:"updated"`
 }
 
-// ListPrices 获取价格列表
-func (s *PriceService) ListPrices(category string) ([]PriceCategory, string, error) {
-	// TODO: 从数据库读取价格
-	// 这里使用模拟数据
+// dbPriceRow 用于接收 JOIN 查询结果
+type dbPriceRow struct {
+	CategoryName string
+	Name         string
+	Price        float64
+	Unit         string
+	UpdatedAt    time.Time
+}
 
+// ListPrices 从数据库获取价格列表，按分类分组返回
+func (s *PriceService) ListPrices(category string) ([]PriceCategory, string, error) {
+	var rows []dbPriceRow
+
+	query := s.db.Table("prices p").
+		Select("c.name AS category_name, p.name, p.price, p.unit, p.updated_at").
+		Joins("JOIN categories c ON p.category_id = c.id").
+		Where("c.status = ?", 1).
+		Order("c.sort ASC, c.id ASC, p.id ASC")
+
+	if category != "" && category != "all" {
+		query = query.Where("c.name = ?", category)
+	}
+
+	if err := query.Scan(&rows).Error; err != nil {
+		return nil, "", err
+	}
+
+	// 数据库暂无数据时返回初始化 mock，避免前端空白
+	if len(rows) == 0 {
+		return mockPrices(category)
+	}
+
+	// 按分类聚合，保持查询返回的顺序
+	categoryMap := make(map[string]*PriceCategory)
+	var categoryOrder []string
+	latestUpdated := ""
+
+	for _, r := range rows {
+		if _, exists := categoryMap[r.CategoryName]; !exists {
+			categoryMap[r.CategoryName] = &PriceCategory{Name: r.CategoryName}
+			categoryOrder = append(categoryOrder, r.CategoryName)
+		}
+		updated := r.UpdatedAt.Format("2006-01-02 15:04:05")
+		if latestUpdated == "" {
+			latestUpdated = updated
+		}
+		categoryMap[r.CategoryName].Items = append(categoryMap[r.CategoryName].Items, PriceItem{
+			Name:    r.Name,
+			Price:   r.Price,
+			Unit:    r.Unit,
+			Updated: updated,
+		})
+	}
+
+	if latestUpdated == "" {
+		latestUpdated = time.Now().Format("2006-01-02 15:04:05")
+	}
+
+	result := make([]PriceCategory, 0, len(categoryOrder))
+	for _, name := range categoryOrder {
+		result = append(result, *categoryMap[name])
+	}
+
+	return result, latestUpdated, nil
+}
+
+// mockPrices 当数据库尚未初始化数据时使用的兜底数据
+func mockPrices(category string) ([]PriceCategory, string, error) {
 	updatedAt := time.Now().Format("2006-01-02 15:04:05")
 
 	categories := []PriceCategory{
@@ -74,7 +137,7 @@ func (s *PriceService) ListPrices(category string) ([]PriceCategory, string, err
 		},
 	}
 
-	if category != "all" {
+	if category != "" && category != "all" {
 		for _, cat := range categories {
 			if cat.Name == category {
 				return []PriceCategory{cat}, updatedAt, nil

@@ -1,75 +1,142 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/prices_controller.dart';
+import '../utils/app_theme.dart';
 
-class PricesPage extends StatelessWidget {
+class PricesPage extends StatefulWidget {
   const PricesPage({super.key});
+
+  @override
+  State<PricesPage> createState() => _PricesPageState();
+}
+
+class _PricesPageState extends State<PricesPage> {
+  late PricesController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.put(PricesController());
+  }
+
+  @override
+  void dispose() {
+    Get.delete<PricesController>();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('回收价格'),
-        backgroundColor: Colors.green,
-      ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
+      appBar: AppBar(title: const Text('回收价格')),
+      body: Obx(() {
+        if (_ctrl.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppTheme.primary),
+          );
+        }
+        if (_ctrl.errorMsg.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.info_outline, color: Colors.blue),
-                const SizedBox(width: 10),
-                Text('价格每日更新，仅供参考', style: TextStyle(color: Colors.blue[700])),
+                const Icon(Icons.cloud_off_outlined,
+                    size: 64, color: AppTheme.textHint),
+                const SizedBox(height: 16),
+                const Text('加载失败',
+                    style: TextStyle(color: AppTheme.textSecondary)),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _ctrl.fetchPrices,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('重试'),
+                ),
               ],
             ),
+          );
+        }
+        return RefreshIndicator(
+          color: AppTheme.primary,
+          onRefresh: _ctrl.fetchPrices,
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              // 提示条
+              Container(
+                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryLight,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline,
+                        color: AppTheme.primaryDark, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '价格每日更新，以实际回收为准',
+                        style: TextStyle(
+                            color: AppTheme.primaryDeep, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // 分类卡片
+              ..._ctrl.categories.map((cat) => _buildCategoryCard(cat)),
+            ],
           ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(10),
-              children: [
-                _buildCategoryCard('📰 纸类', [
-                  {'name': '报纸', 'price': '1.5', 'unit': 'kg'},
-                  {'name': '纸箱', 'price': '1.2', 'unit': 'kg'},
-                  {'name': '书本', 'price': '1.8', 'unit': 'kg'},
-                ]),
-                _buildCategoryCard('🥤 塑料', [
-                  {'name': 'PET 瓶', 'price': '2.0', 'unit': 'kg'},
-                  {'name': 'PE 膜', 'price': '3.5', 'unit': 'kg'},
-                ]),
-                _buildCategoryCard('🥫 金属', [
-                  {'name': '铁', 'price': '3.5', 'unit': 'kg'},
-                  {'name': '铝', 'price': '12.0', 'unit': 'kg'},
-                  {'name': '铜', 'price': '45.0', 'unit': 'kg'},
-                ]),
-                _buildCategoryCard('🔌 电器', [
-                  {'name': '空调', 'price': '150', 'unit': '台'},
-                  {'name': '冰箱', 'price': '100', 'unit': '台'},
-                ]),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
-  Widget _buildCategoryCard(String title, List<Map<String, String>> items) {
+  Widget _buildCategoryCard(Map<String, dynamic> cat) {
+    final name = cat['name'] as String? ?? '未知';
+    final items = (cat['items'] as List<dynamic>?) ?? [];
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
-        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        children: items.map((item) => ListTile(
-          title: Text(item['name']!),
-          trailing: Text(
-            '¥${item['price']}/${item['unit']}',
-            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16),
+        initiallyExpanded: true,
+        leading: const Icon(Icons.category_outlined, color: AppTheme.primary),
+        title: Text(
+          name,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
           ),
-        )).toList(),
+        ),
+        childrenPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        children: items.map<Widget>((item) {
+          final m = item as Map<String, dynamic>;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    m['name'] as String? ?? '-',
+                    style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary),
+                  ),
+                ),
+                Text(
+                  '¥${m['price']}/${m['unit'] ?? 'kg'}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.danger,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

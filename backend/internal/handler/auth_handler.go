@@ -28,13 +28,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误：" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误"})
 		return
 	}
 
 	// TODO: 验证短信验证码
 
-	user, err := h.authService.Register(c.Request.Context(), req.Phone, req.Password)
+	user, err := h.authService.Register(req.Phone, req.Password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": err.Error()})
 		return
@@ -46,7 +46,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		"data": gin.H{
 			"user_id": user.ID,
 			"phone":   user.Phone,
-			"nickname": user.Nickname,
 		},
 	})
 }
@@ -55,15 +54,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		Phone    string `json:"phone" binding:"required,len=11"`
-		Password string `json:"password" binding:"required,min=6"`
+		Password string `json:"password" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误：" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误"})
 		return
 	}
 
-	token, err := h.authService.Login(c.Request.Context(), req.Phone, req.Password)
+	token, err := h.authService.Login(req.Phone, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": err.Error()})
 		return
@@ -74,36 +73,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"message": "登录成功",
 		"data": gin.H{
 			"token":      token,
-			"expires_in": 86400, // 24 小时
-			"token_type": "Bearer",
-		},
-	})
-}
-
-// RefreshToken 刷新 Token
-func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	var req struct {
-		Token string `json:"token" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "请求参数错误"})
-		return
-	}
-
-	newToken, err := h.authService.RefreshToken(req.Token)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "刷新成功",
-		"data": gin.H{
-			"token":      newToken,
 			"expires_in": 86400,
-			"token_type": "Bearer",
 		},
 	})
 }
@@ -119,14 +89,10 @@ func (h *AuthHandler) WechatLogin(c *gin.Context) {
 		return
 	}
 
-	// TODO: 实现微信登录逻辑
-
-	c.JSON(http.StatusOK, gin.H{
-		"code":    200,
-		"message": "微信登录成功",
-		"data": gin.H{
-			"token":      "wechat_token",
-			"expires_in": 86400,
-		},
+	// TODO: 接入微信 OAuth2，用 req.Code 换取 openid，再关联/创建本地用户并签发 JWT
+	// 参考：https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html
+	c.JSON(http.StatusNotImplemented, gin.H{
+		"code":    501,
+		"message": "微信登录功能尚未实现",
 	})
 }

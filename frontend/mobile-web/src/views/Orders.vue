@@ -1,84 +1,166 @@
 <template>
   <div class="orders">
-    <van-tabs v-model:active="active">
-      <van-tab title="全部" :name="0" />
-      <van-tab title="待接单" :name="1" />
-      <van-tab title="回收中" :name="2" />
-      <van-tab title="已完成" :name="3" />
+    <van-nav-bar title="我的订单" />
+
+    <van-tabs v-model:active="activeTab" @change="onTabChange">
+      <van-tab title="全部" name="all" />
+      <van-tab title="待接单" name="pending" />
+      <van-tab title="回收中" name="processing" />
+      <van-tab title="已完成" name="completed" />
     </van-tabs>
 
-    <van-list
-      v-model:loading="loading"
-      :finished="finished"
-      finished-text="没有更多了"
-      @load="onLoad"
-    >
-      <van-card
-        v-for="order in orders"
-        :key="order.order_id"
-        class="order-card"
-        :title="order.order_no"
-        :desc="order.type === 1 ? '上门回收' : '站点回收'"
-        :price="order.total_amount.toFixed(2)"
-        :num="1"
+    <van-pull-refresh v-model="refreshing" @refresh="onRefresh">
+      <van-list
+        v-model:loading="loading"
+        :finished="finished"
+        finished-text="没有更多了"
+        @load="onLoad"
       >
-        <template #tags>
-          <van-tag :type="getStatusType(order.status)">
-            {{ getStatusText(order.status) }}
-          </van-tag>
-        </template>
-        <template #footer>
-          <van-button size="mini" @click="viewDetail(order)">详情</van-button>
-          <van-button v-if="order.status === 0" size="mini" type="danger">取消</van-button>
-        </template>
-      </van-card>
-    </van-list>
+        <van-card
+          v-for="order in displayOrders"
+          :key="order.id"
+          class="order-card"
+          :title="order.order_no"
+          :desc="order.type === 1 ? '上门回收' : '站点回收'"
+        >
+          <template #price>
+            <span class="price-text">¥{{ Number(order.total_amount).toFixed(2) }}</span>
+          </template>
+          <template #tags>
+            <van-tag plain :type="getStatusType(order.status)">
+              {{ getStatusText(order.status) }}
+            </van-tag>
+          </template>
+          <template #footer>
+            <van-button size="mini" @click="viewDetail(order)">查看详情</van-button>
+            <van-button
+              v-if="order.status === 0"
+              size="mini"
+              type="danger"
+              plain
+              @click="onCancelOrder(order)"
+            >
+              取消订单
+            </van-button>
+          </template>
+        </van-card>
+
+        <van-empty v-if="!loading && displayOrders.length === 0" description="暂无订单" />
+      </van-list>
+    </van-pull-refresh>
+
+    <van-button
+      round
+      type="primary"
+      class="create-btn"
+      icon="plus"
+      @click="router.push('/order/create')"
+    >
+      创建订单
+    </van-button>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { VanTabs, VanTab, VanList, VanCard, VanTag, VanButton } from 'vant'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { showConfirmDialog, showToast, showFailToast } from 'vant'
+import { fetchOrders, cancelOrder } from '@/api/orders'
+import { getStatusType, getStatusText } from '@/utils/orderStatus'
 
-const active = ref(0)
+const router = useRouter()
+
+const activeTab = ref('all')
 const loading = ref(false)
 const finished = ref(false)
-const orders = ref([])
+const refreshing = ref(false)
+const allOrders = ref([])
 
-const onLoad = () => {
-  // 模拟加载订单
-  setTimeout(() => {
-    orders.value.push(
-      { order_id: 1, order_no: 'ORD20260305001', type: 1, total_amount: 15.5, status: 3 },
-      { order_id: 2, order_no: 'ORD20260304002', type: 2, total_amount: 28.0, status: 0 }
-    )
+// 根据当前 Tab 过滤订单
+const displayOrders = computed(() => {
+  const statusMap = { pending: [0], processing: [1, 2], completed: [3] }
+  if (activeTab.value === 'all') return allOrders.value
+  const targets = statusMap[activeTab.value] || []
+  return allOrders.value.filter(o => targets.includes(o.status))
+})
+
+const loadOrders = async () => {
+  loading.value = true
+  try {
+    const res = await fetchOrders({ page: 1, page_size: 50 })
+    allOrders.value = res.data?.list || []
+  } catch (err) {
+    showFailToast(err.message || '加载失败')
+  } finally {
     loading.value = false
     finished.value = true
-  }, 1000)
+    refreshing.value = false
+  }
 }
 
-const getStatusType = (status) => {
-  const types = { 0: 'primary', 1: 'warning', 2: 'success', 3: 'success', 4: 'danger' }
-  return types[status] || ''
+const onLoad = () => {
+  if (allOrders.value.length === 0) {
+    loadOrders()
+  } else {
+    loading.value = false
+    finished.value = true
+  }
 }
 
-const getStatusText = (status) => {
-  const texts = { 0: '待接单', 1: '已接单', 2: '回收中', 3: '已完成', 4: '已取消' }
-  return texts[status] || '未知'
+const onTabChange = () => {
+  // Tab 切换在本地过滤，无需重新请求
+}
+
+const onRefresh = () => {
+  finished.value = false
+  allOrders.value = []
+  loadOrders()
 }
 
 const viewDetail = (order) => {
-  // TODO: 跳转到订单详情
-  console.log('查看订单详情:', order)
+  router.push(`/order/${order.id}`)
+}
+
+const onCancelOrder = async (order) => {
+  try {
+    await showConfirmDialog({
+      title: '取消订单',
+      message: `确定取消订单 ${order.order_no} 吗？`
+    })
+    await cancelOrder(order.id)
+    showToast({ message: '已取消', type: 'success' })
+    onRefresh()
+  } catch (err) {
+    if (err !== 'cancel') showFailToast(err.message || '取消失败')
+  }
 }
 </script>
 
 <style scoped>
 .orders {
-  padding-bottom: 20px;
+  padding-bottom: 80px;
+  min-height: 100vh;
+  background: #f5f5f5;
 }
 
 .order-card {
-  margin: 10px;
+  margin: 10px 12px;
+  border-radius: 12px;
+}
+
+.price-text {
+  color: #ee0a24;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.create-btn {
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  --van-button-primary-background: #10B981;
+  --van-button-primary-border-color: #10B981;
 }
 </style>

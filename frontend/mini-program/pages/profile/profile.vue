@@ -1,76 +1,110 @@
 <template>
   <view class="container">
-    <view class="header">👤 个人中心</view>
-
-    <!-- 用户信息 -->
+    <!-- 用户信息卡片 -->
     <view class="user-card">
-      <view class="avatar">😊</view>
+      <view class="avatar">
+        <text>{{ avatarChar }}</text>
+      </view>
       <view class="user-info">
-        <view class="nickname">用户昵称</view>
-        <view class="phone">138****8000</view>
+        <view class="user-phone">{{ maskedPhone }}</view>
+        <view class="user-tag">普通用户</view>
       </view>
     </view>
 
     <!-- 统计数据 -->
-    <view class="stats">
+    <view class="stats-card">
       <view class="stat-item">
-        <view class="stat-value">1250</view>
+        <view class="stat-value">{{ userInfo?.points ?? 0 }}</view>
         <view class="stat-label">积分</view>
       </view>
+      <view class="stat-divider"></view>
       <view class="stat-item">
-        <view class="stat-value">15</view>
+        <view class="stat-value">-</view>
         <view class="stat-label">订单</view>
       </view>
+      <view class="stat-divider"></view>
       <view class="stat-item">
-        <view class="stat-value">¥358.50</view>
+        <view class="stat-value">-</view>
         <view class="stat-label">收益</view>
       </view>
     </view>
 
-    <!-- 功能列表 -->
-    <view class="menu-list">
-      <view class="menu-item" @click="goToPage('/pages/orders/orders')">
-        <view class="menu-icon">📦</view>
-        <view class="menu-text">我的订单</view>
-        <view class="menu-arrow">></view>
+    <!-- 功能菜单 -->
+    <view class="menu-card">
+      <view class="menu-item" @click="switchToOrders">
+        <text class="menu-icon">📦</text>
+        <text class="menu-text">我的订单</text>
+        <text class="menu-arrow">›</text>
       </view>
-      <view class="menu-item">
-        <view class="menu-icon">📍</view>
-        <view class="menu-text">我的地址</view>
-        <view class="menu-arrow">></view>
+      <view class="menu-item" @click="comingSoon">
+        <text class="menu-icon">📍</text>
+        <text class="menu-text">我的地址</text>
+        <text class="menu-arrow">›</text>
       </view>
-      <view class="menu-item">
-        <view class="menu-icon">🎁</view>
-        <view class="menu-text">积分商城</view>
-        <view class="menu-arrow">></view>
+      <view class="menu-item" @click="comingSoon">
+        <text class="menu-icon">🎁</text>
+        <text class="menu-text">积分商城</text>
+        <text class="menu-arrow">›</text>
       </view>
-      <view class="menu-item">
-        <view class="menu-icon">🎧</view>
-        <view class="menu-text">客服中心</view>
-        <view class="menu-arrow">></view>
+      <view class="menu-item" @click="comingSoon">
+        <text class="menu-icon">🎧</text>
+        <text class="menu-text">客服中心</text>
+        <text class="menu-arrow">›</text>
       </view>
-      <view class="menu-item" @click="logout">
-        <view class="menu-icon">🚪</view>
-        <view class="menu-text">退出登录</view>
-        <view class="menu-arrow">></view>
+    </view>
+
+    <view class="menu-card">
+      <view class="menu-item logout-item" @click="handleLogout">
+        <text class="menu-icon">🚪</text>
+        <text class="menu-text logout-text">退出登录</text>
+        <text class="menu-arrow">›</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-const goToPage = (url) => {
-  uni.navigateTo({ url })
+import { computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const userInfo = computed(() => authStore.userInfo)
+
+const maskedPhone = computed(() => {
+  const phone = userInfo.value?.phone || ''
+  if (phone.length >= 11) return phone.slice(0, 3) + '****' + phone.slice(-4)
+  return phone || '未设置'
+})
+
+const avatarChar = computed(() => {
+  const phone = userInfo.value?.phone || ''
+  return phone ? phone.slice(-1) : '我'
+})
+
+onShow(() => {
+  if (!authStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/login/login' })
+  }
+})
+
+const switchToOrders = () => {
+  uni.switchTab({ url: '/pages/orders/orders' })
 }
 
-const logout = () => {
+const comingSoon = () => {
+  uni.showToast({ title: '功能即将上线', icon: 'none' })
+}
+
+const handleLogout = () => {
   uni.showModal({
-    title: '提示',
+    title: '退出登录',
     content: '确定要退出登录吗？',
-    success: (res) => {
-      if (res.confirm) {
-        uni.showToast({ title: '已退出', icon: 'success' })
-      }
+    confirmColor: '#ef4444',
+    success(res) {
+      if (!res.confirm) return
+      authStore.logout()
+      uni.reLaunch({ url: '/pages/login/login' })
     }
   })
 }
@@ -82,16 +116,8 @@ const logout = () => {
   min-height: 100vh;
 }
 
-.header {
-  font-size: 40rpx;
-  font-weight: bold;
-  text-align: center;
-  padding: 40rpx 0;
-  background: white;
-}
-
 .user-card {
-  background: linear-gradient(135deg, #409EFF, #67C23A);
+  background: linear-gradient(135deg, #10B981, #059669);
   padding: 60rpx 40rpx;
   display: flex;
   align-items: center;
@@ -100,36 +126,41 @@ const logout = () => {
 .avatar {
   width: 120rpx;
   height: 120rpx;
-  background: white;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  text-align: center;
-  line-height: 120rpx;
-  font-size: 60rpx;
-  margin-right: 30rpx;
-}
-
-.user-info {
-  flex: 1;
-}
-
-.nickname {
-  font-size: 36rpx;
-  color: white;
-  font-weight: bold;
-  margin-bottom: 10rpx;
-}
-
-.phone {
-  font-size: 28rpx;
-  color: rgba(255,255,255,0.8);
-}
-
-.stats {
   display: flex;
-  background: white;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #fff;
+  font-weight: bold;
+  margin-right: 30rpx;
+  flex-shrink: 0;
+}
+
+.user-phone {
+  font-size: 36rpx;
+  color: #fff;
+  font-weight: bold;
+  margin-bottom: 12rpx;
+}
+
+.user-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.stats-card {
+  display: flex;
+  background: #fff;
   margin: 20rpx;
   border-radius: 20rpx;
   padding: 40rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .stat-item {
@@ -140,7 +171,7 @@ const logout = () => {
 .stat-value {
   font-size: 40rpx;
   font-weight: bold;
-  color: #409EFF;
+  color: #10B981;
   margin-bottom: 10rpx;
 }
 
@@ -149,18 +180,25 @@ const logout = () => {
   color: #999;
 }
 
-.menu-list {
-  background: white;
-  margin: 20rpx;
+.stat-divider {
+  width: 1rpx;
+  background: #eee;
+  margin: 10rpx 0;
+}
+
+.menu-card {
+  background: #fff;
+  margin: 0 20rpx 20rpx;
   border-radius: 20rpx;
   overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #eee;
+  padding: 32rpx 30rpx;
+  border-bottom: 1rpx solid #f5f5f5;
 }
 
 .menu-item:last-child {
@@ -170,6 +208,8 @@ const logout = () => {
 .menu-icon {
   font-size: 40rpx;
   margin-right: 20rpx;
+  width: 50rpx;
+  text-align: center;
 }
 
 .menu-text {
@@ -179,7 +219,12 @@ const logout = () => {
 }
 
 .menu-arrow {
-  color: #999;
-  font-size: 28rpx;
+  color: #ccc;
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.logout-text {
+  color: #ef4444;
 }
 </style>

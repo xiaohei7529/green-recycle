@@ -3,61 +3,84 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "首页"
+        "navigationBarTitleText": "Green Recycle",
+        "navigationBarBackgroundColor": "#10B981",
+        "navigationBarTextStyle": "white"
       }
     },
     {
       "path": "pages/orders/orders",
       "style": {
-        "navigationBarTitleText": "我的订单"
+        "navigationBarTitleText": "我的订单",
+        "navigationBarBackgroundColor": "#10B981",
+        "navigationBarTextStyle": "white",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "light"
       }
     },
     {
       "path": "pages/prices/prices",
       "style": {
-        "navigationBarTitleText": "回收价格"
+        "navigationBarTitleText": "回收价格",
+        "navigationBarBackgroundColor": "#10B981",
+        "navigationBarTextStyle": "white",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "light"
       }
     },
     {
       "path": "pages/profile/profile",
       "style": {
-        "navigationBarTitleText": "个人中心"
+        "navigationBarTitleText": "个人中心",
+        "navigationBarBackgroundColor": "#10B981",
+        "navigationBarTextStyle": "white"
       }
     },
     {
       "path": "pages/login/login",
       "style": {
-        "navigationBarTitleText": "登录"
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/order-create/order-create",
+      "style": {
+        "navigationBarTitleText": "发起回收",
+        "navigationBarBackgroundColor": "#10B981",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/order-detail/order-detail",
+      "style": {
+        "navigationBarTitleText": "订单详情",
+        "navigationBarBackgroundColor": "#10B981",
+        "navigationBarTextStyle": "white"
       }
     }
   ],
   "tabBar": {
     "color": "#999999",
-    "selectedColor": "#409EFF",
+    "selectedColor": "#10B981",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png"
+        "text": "首页"
       },
       {
         "pagePath": "pages/orders/orders",
-        "text": "订单",
-        "iconPath": "static/tabbar/order.png",
-        "selectedIconPath": "static/tabbar/order-active.png"
+        "text": "订单"
       },
       {
         "pagePath": "pages/prices/prices",
-        "text": "价格",
-        "iconPath": "static/tabbar/price.png",
-        "selectedIconPath": "static/tabbar/price-active.png"
+        "text": "价格"
       },
       {
         "pagePath": "pages/profile/profile",
-        "text": "我的",
-        "iconPath": "static/tabbar/profile.png",
-        "selectedIconPath": "static/tabbar/profile-active.png"
+        "text": "我的"
       }
     ]
   }

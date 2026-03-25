@@ -8,8 +8,9 @@ import (
 	"github.com/xiaohei7529/green-recycle/backend/internal/service"
 )
 
-// AuthMiddleware JWT 认证中间件
-func AuthMiddleware() gin.HandlerFunc {
+
+// AuthMiddleware JWT 认证中间件，authSvc 由调用方在启动时注入
+func AuthMiddleware(authSvc *service.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取 Authorization header
 		authHeader := c.GetHeader("Authorization")
@@ -29,9 +30,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		// 验证 Token
-		authService := service.NewAuthService(nil, nil) // 实际应该从上下文获取
-		userID, err := authService.VerifyToken(tokenString)
+		userID, err := authSvc.VerifyToken(tokenString)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "认证失败"})
 			c.Abort()

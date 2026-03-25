@@ -1,25 +1,75 @@
 <template>
   <div class="home">
-    <!-- 导航栏 -->
-    <NavBar />
     
     <!-- Hero 区域 -->
-    <HeroSection 
-      @create-order="createOrder"
-      @view-prices="viewPrices"
-    />
+    <section class="hero-section">
+      <div class="hero-slider">
+        <div class="hero-slide">
+          <div class="hero-content">
+            <h1>让回收更简单 <span class="highlight">环保更有价值</span></h1>
+            <p class="subtitle">智能废品回收平台，一键预约，上门回收，积分兑换</p>
+            <div class="hero-actions">
+              <button class="btn-primary btn-large" @click="createOrder">
+                📱 立即回收
+              </button>
+              <button class="btn-secondary btn-large" @click="viewPrices">
+                💰 查看价格
+              </button>
+            </div>
+            <div class="hero-stats">
+              <div class="stat">
+                <span class="value">10 万+</span>
+                <span class="label">注册用户</span>
+              </div>
+              <div class="stat">
+                <span class="value">50 万+</span>
+                <span class="label">回收订单</span>
+              </div>
+              <div class="stat">
+                <span class="value">4.9★</span>
+                <span class="label">用户评分</span>
+              </div>
+            </div>
+          </div>
+          <div class="hero-image">
+            <img src="/images/recycle-hero.svg" alt="智能回收" />
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- 核心功能 -->
-    <FeaturesSection />
+    <section class="features-section">
+      <div class="container">
+        <h2 class="section-title">核心功能</h2>
+        <div class="features-grid">
+          <div class="feature-card" v-for="feature in features" :key="feature.title">
+            <div class="feature-icon">{{ feature.icon }}</div>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- 回收流程 -->
-    <ProcessSection />
+    <section class="process-section">
+      <div class="container">
+        <h2 class="section-title">回收流程</h2>
+        <div class="process-steps">
+          <div class="process-step" v-for="(step, index) in processSteps" :key="index">
+            <div class="step-number">{{ index + 1 }}</div>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.description }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- 回收价格 + 图表 -->
+    <!-- 回收价格 -->
     <section class="prices-section">
       <div class="container">
         <h2 class="section-title">今日回收价格</h2>
-        <PriceChart />
         <div class="prices-grid">
           <div class="price-card" v-for="price in prices" :key="price.category">
             <h3>{{ price.category }}</h3>
@@ -32,7 +82,16 @@
     </section>
 
     <!-- 数据统计 -->
-    <StatsSection />
+    <section class="stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-card" v-for="stat in stats" :key="stat.label">
+            <div class="stat-value">{{ stat.value }}</div>
+            <div class="stat-label">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- 用户评价 -->
     <section class="testimonials-section">
@@ -65,30 +124,35 @@
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'
-import HeroSection from '@/components/HeroSection.vue'
-import FeaturesSection from '@/components/FeaturesSection.vue'
-import ProcessSection from '@/components/ProcessSection.vue'
-import StatsSection from '@/components/StatsSection.vue'
-import PriceChart from '@/components/PriceChart.vue'
-
 export default {
   name: 'HomePage',
-  components: {
-    NavBar,
-    HeroSection,
-    FeaturesSection,
-    ProcessSection,
-    StatsSection,
-    PriceChart
-  },
   data() {
     return {
+      features: [
+        { icon: '📱', title: '扫码下单', description: '扫描废品二维码，快速下单预约' },
+        { icon: '🗺️', title: '附近回收点', description: 'GPS 定位，显示附近回收站点' },
+        { icon: '💰', title: '实时价格', description: '各类废品实时回收价格' },
+        { icon: '📅', title: '预约上门', description: '选择时间，回收员准时上门' },
+        { icon: '📊', title: '回收记录', description: '历史回收记录，收益统计' },
+        { icon: '🏆', title: '积分系统', description: '回收得积分，兑换精美礼品' }
+      ],
+      processSteps: [
+        { title: '在线下单', description: '选择废品种类和数量，预约回收时间' },
+        { title: '上门回收', description: '回收员准时上门，称重确认' },
+        { title: '即时结算', description: '现场结算，支持多种支付方式' },
+        { title: '积分奖励', description: '获得积分，兑换精美礼品' }
+      ],
       prices: [
-        { category: '废纸', price: '1.5', updateTime: '2026-03-15 08:00' },
-        { category: '塑料', price: '2.0', updateTime: '2026-03-15 08:00' },
-        { category: '金属', price: '3.5', updateTime: '2026-03-15 08:00' },
-        { category: '玻璃', price: '0.8', updateTime: '2026-03-15 08:00' }
+        { category: '废纸', price: '1.5', updateTime: '2026-03-08 08:00' },
+        { category: '塑料', price: '2.0', updateTime: '2026-03-08 08:00' },
+        { category: '金属', price: '3.5', updateTime: '2026-03-08 08:00' },
+        { category: '玻璃', price: '0.8', updateTime: '2026-03-08 08:00' }
+      ],
+      stats: [
+        { value: '10 万+', label: '注册用户' },
+        { value: '50 万+', label: '回收订单' },
+        { value: '1000+', label: '回收站点' },
+        { value: '5000 吨', label: '回收废品' }
       ],
       testimonials: [
         {
@@ -114,7 +178,7 @@ export default {
   },
   methods: {
     createOrder() {
-      this.$router.push('/order/create')
+      this.$router.push('/order')
     },
     viewPrices() {
       this.$router.push('/prices')
@@ -126,7 +190,6 @@ export default {
 <style scoped>
 .home {
   background: white;
-  padding-top: 70px; /* Offset for fixed navbar */
 }
 
 .container {

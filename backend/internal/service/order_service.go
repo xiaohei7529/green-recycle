@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -98,16 +100,10 @@ func (s *OrderService) CreateOrder(userID uint, req *model.CreateOrderRequest) (
 	return order, nil
 }
 
-// ListOrders 获取订单列表 (带缓存优化)
-func (s *OrderService) ListOrders(ctx context.Context, userID uint, status string, page, pageSize int) (*[]model.Order, int64, error) {
-	// 缓存 Key
-	cacheKey := fmt.Sprintf("orders:user:%d:status:%s:page:%d:size:%d", userID, status, page, pageSize)
-	
-	// 尝试从缓存获取 (简化处理，实际应使用 JSON 序列化)
-	// cached, err := s.rdb.Get(ctx, cacheKey).Result()
-	// if err == nil {
-	//     // 缓存命中，解析返回
-	// }
+// ListOrders 获取订单列表
+func (s *OrderService) ListOrders(userID uint, status string, page, pageSize int) (*[]model.Order, int64, error) {
+	var orders []model.Order
+	var total int64
 
 	query := s.db.Model(&model.Order{}).Where("user_id = ?", userID)
 
@@ -117,7 +113,6 @@ func (s *OrderService) ListOrders(ctx context.Context, userID uint, status strin
 
 	query.Count(&total)
 
-	// 分页优化：使用 Limit  + Offset
 	offset := (page - 1) * pageSize
 	err := query.Preload("OrderItems").
 		Order("created_at DESC").
@@ -129,23 +124,11 @@ func (s *OrderService) ListOrders(ctx context.Context, userID uint, status strin
 		return nil, 0, err
 	}
 
-	// 写入缓存 (5 分钟)
-	// s.rdb.Set(ctx, cacheKey, orders, time.Minute*5)
-
 	return &orders, total, nil
 }
 
-// GetOrder 获取订单详情 (带缓存优化)
-func (s *OrderService) GetOrder(ctx context.Context, orderID uint, userID uint) (*model.Order, error) {
-	// 缓存 Key
-	cacheKey := fmt.Sprintf("order:%d", orderID)
-	
-	// 尝试从缓存获取
-	// cached, err := s.rdb.Get(ctx, cacheKey).Result()
-	// if err == nil {
-	//     // 缓存命中，解析返回
-	// }
-
+// GetOrder 获取订单详情
+func (s *OrderService) GetOrder(orderID uint, userID uint) (*model.Order, error) {
 	var order model.Order
 
 	err := s.db.Preload("OrderItems").
@@ -161,9 +144,6 @@ func (s *OrderService) GetOrder(ctx context.Context, orderID uint, userID uint) 
 	if order.UserID != userID {
 		return nil, fmt.Errorf("无权查看此订单")
 	}
-
-	// 写入缓存 (10 分钟)
-	// s.rdb.Set(ctx, cacheKey, order, time.Minute*10)
 
 	return &order, nil
 }
@@ -254,12 +234,12 @@ func (s *OrderService) pushNewOrderNotification(ctx context.Context, order *mode
 	s.rdb.Expire(ctx, key, time.Hour*24)
 }
 
-// randomString 生成随机字符串
+// randomString 使用 crypto/rand 生成安全随机十六进制字符串，长度为 n 个字符
 func randomString(n int) string {
-	const letters = "0123456789abcdef"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letters[time.Now().UnixNano()%int64(len(letters))]
+	bytes := make([]byte, (n+1)/2)
+	if _, err := rand.Read(bytes); err != nil {
+		// 极端情况下降级为时间戳
+		return fmt.Sprintf("%x", time.Now().UnixNano())[:n]
 	}
-	return string(b)
+	return hex.EncodeToString(bytes)[:n]
 }

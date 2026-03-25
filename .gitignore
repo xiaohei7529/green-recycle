@@ -40,3 +40,7 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+
+# 临时文件 
+reports/*

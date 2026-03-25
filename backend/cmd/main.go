@@ -35,25 +35,21 @@ func main() {
 
 	// 初始化服务
 	userService := service.NewUserService(db, rdb)
-	authService := service.NewAuthService(db, rdb, os.Getenv("JWT_SECRET"))
+	authService := service.NewAuthService(db, rdb)
 	orderService := service.NewOrderService(db, rdb)
 	priceService := service.NewPriceService(db)
-	captchaService, err := service.NewCaptchaService(rdb)
-	if err != nil {
-		log.Printf("Warning: Captcha service initialization failed: %v", err)
-	}
-	passwordResetService := service.NewPasswordResetService(db, rdb, os.Getenv("JWT_SECRET"))
 
 	// 初始化处理器
 	authHandler := handler.NewAuthHandler(authService)
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, orderService)
 	orderHandler := handler.NewOrderHandler(orderService)
 	priceHandler := handler.NewPriceHandler(priceService)
-	captchaHandler := handler.NewCaptchaHandler(captchaService)
-	passwordResetHandler := handler.NewPasswordResetHandler(passwordResetService)
 
 	// 初始化 Gin 路由
 	r := gin.Default()
+
+	// 全局中间件
+	r.Use(handler.CORSMiddleware())
 
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
@@ -69,39 +65,21 @@ func main() {
 			auth.POST("/register", authHandler.Register)
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/wechat", authHandler.WechatLogin)
-			auth.POST("/refresh", authHandler.RefreshToken)
-			
-			// 密码重置
-			auth.POST("/password/reset/request", passwordResetHandler.RequestReset)
-			auth.POST("/password/reset/verify", passwordResetHandler.VerifyResetToken)
-			auth.POST("/password/reset", passwordResetHandler.ResetPassword)
-		}
-
-		// 验证码接口（公开）
-		captcha := v1.Group("/captcha")
-		{
-			captcha.GET("/:captchaID", captchaHandler.GenerateCaptcha)
-			captcha.POST("/verify", captchaHandler.VerifyCaptcha)
-		}
-
-		// 短信接口（公开）
-		sms := v1.Group("/sms")
-		{
-			sms.POST("/send", captchaHandler.SendSMSCode)
-			sms.POST("/verify", captchaHandler.VerifySMSCode)
 		}
 
 		// 用户接口（需要认证）
 		user := v1.Group("/user")
-		user.Use(handler.AuthMiddleware())
+		user.Use(handler.AuthMiddleware(authService))
 		{
 			user.GET("/profile", userHandler.GetProfile)
 			user.PUT("/profile", userHandler.UpdateProfile)
+			user.GET("/points", userHandler.GetPoints)
+			user.GET("/orders/history", userHandler.GetOrderHistory)
 		}
 
 		// 订单接口（需要认证）
 		orders := v1.Group("/orders")
-		orders.Use(handler.AuthMiddleware())
+		orders.Use(handler.AuthMiddleware(authService))
 		{
 			orders.POST("", orderHandler.CreateOrder)
 			orders.GET("", orderHandler.ListOrders)

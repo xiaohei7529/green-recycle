@@ -2,17 +2,17 @@
   "name": "green-recycle-miniprogram",
   "version": "1.0.0",
   "description": "Green Recycle 微信小程序",
-  "main": "main.js",
   "scripts": {
     "dev:mp-weixin": "uni -p mp-weixin",
     "build:mp-weixin": "uni build -p mp-weixin"
   },
   "dependencies": {
-    "@dcloudio/uni-app": "^3.0.0",
+    "@dcloudio/uni-app": "3.0.0-5000520260324001",
+    "pinia": "^2.1.7",
     "vue": "^3.4.0"
   },
   "devDependencies": {
-    "@dcloudio/uni-cli-shared": "^3.0.0",
-    "@dcloudio/vite-plugin-uni": "^3.0.0"
+    "@dcloudio/uni-cli-shared": "3.0.0-5000520260324001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5000520260324001"
   }
 }

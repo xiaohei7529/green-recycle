@@ -1,7 +1,5 @@
 <template>
   <div class="profile-page">
-    <!-- 导航栏 -->
-    <NavBar />
     
     <!-- 用户信息卡片 -->
     <section class="user-header">
@@ -152,20 +150,25 @@
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue'
+import { useAuthStore } from '@/stores/auth'
+import { ElMessageBox, ElMessage } from 'element-plus'
 
 export default {
   name: 'ProfilePage',
-  components: {
-    NavBar
-  },
   data() {
     return {
       user: {
-        nickname: '张先生',
-        phone: '138****8000',
+        nickname: '加载中...',
+        phone: '',
         avatar: '/avatars/user1.svg'
       }
+    }
+  },
+  created() {
+    const authStore = useAuthStore()
+    if (authStore.userInfo) {
+      this.user.nickname = authStore.userInfo.nickname || '用户'
+      this.user.phone = authStore.userInfo.phone || ''
     }
   },
   methods: {
@@ -173,12 +176,20 @@ export default {
       this.$router.push(path)
     },
     editProfile() {
-      this.$router.push('/profile/edit')
+      ElMessage.info('编辑资料功能即将上线，敬请期待')
     },
-    logout() {
-      if (confirm('确定要退出登录吗？')) {
-        console.log('退出登录')
+    async logout() {
+      try {
+        await ElMessageBox.confirm('确定要退出登录吗？', '退出登录', {
+          confirmButtonText: '确定退出',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        const authStore = useAuthStore()
+        authStore.logout()
         this.$router.push('/login')
+      } catch {
+        // 用户点击取消，不做任何操作
       }
     }
   }
@@ -189,7 +200,6 @@ export default {
 .profile-page {
   min-height: 100vh;
   background: #F9FAFB;
-  padding-top: 70px;
 }
 
 .container {

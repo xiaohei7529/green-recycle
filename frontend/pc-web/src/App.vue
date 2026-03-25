@@ -14,8 +14,11 @@
           <router-link to="/profile" class="nav-item">个人中心</router-link>
         </nav>
         <div class="user-actions">
-          <router-link v-if="!isLoggedIn" to="/login" class="btn-login">登录</router-link>
-          <button v-else @click="logout" class="btn-logout">退出</button>
+          <router-link v-if="!authStore.isLoggedIn" to="/login" class="btn-login">登录</router-link>
+          <template v-else>
+            <router-link to="/profile" class="btn-profile">个人中心</router-link>
+            <button @click="logout" class="btn-logout">退出</button>
+          </template>
         </div>
       </div>
     </header>
@@ -65,21 +68,16 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'App',
-  computed: {
-    isLoggedIn() {
-      return !!localStorage.getItem('userToken')
-    }
-  },
-  methods: {
-    logout() {
-      localStorage.removeItem('userToken')
-      localStorage.removeItem('userInfo')
-      this.$router.push('/login')
-    }
-  }
+<script setup>
+import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+function logout() {
+  authStore.logout()
+  router.push('/login')
 }
 </script>
 
@@ -90,9 +88,9 @@ export default {
   flex-direction: column;
 }
 
-/* 顶部导航栏 */
+/* 顶部导航栏 - 颜色与各页面保持一致使用 #10B981 */
 .header {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: white;
   padding: 1rem 0;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -142,9 +140,10 @@ export default {
 }
 
 .btn-login,
-.btn-logout {
+.btn-logout,
+.btn-profile {
   background: white;
-  color: #2ecc71;
+  color: #10B981;
   border: none;
   padding: 0.5rem 1.5rem;
   border-radius: 2rem;
@@ -152,12 +151,20 @@ export default {
   cursor: pointer;
   text-decoration: none;
   transition: all 0.3s;
+  display: inline-block;
 }
 
 .btn-login:hover,
-.btn-logout:hover {
+.btn-logout:hover,
+.btn-profile:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 /* 主内容区 */
@@ -189,7 +196,7 @@ export default {
 .footer-section h4 {
   font-size: 1.1rem;
   margin-bottom: 1rem;
-  color: #2ecc71;
+  color: #10B981;
 }
 
 .footer-section a {
@@ -201,7 +208,7 @@ export default {
 }
 
 .footer-section a:hover {
-  color: #2ecc71;
+  color: #10B981;
 }
 
 .social-links {

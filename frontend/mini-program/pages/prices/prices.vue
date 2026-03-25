@@ -1,109 +1,150 @@
 <template>
   <view class="container">
-    <view class="header">💰 回收价格</view>
+    <view class="notice-bar">
+      <text class="notice-icon">📢</text>
+      <text>价格每日更新，以实际回收为准</text>
+    </view>
 
-    <view class="notice">价格每日更新，仅供参考</view>
+    <!-- 加载中 -->
+    <view v-if="loading" class="empty-tip">加载中...</view>
 
-    <view v-for="category in prices" :key="category.name" class="category">
-      <view class="category-title">{{ category.name }}</view>
-      <view v-for="item in category.items" :key="item.name" class="price-item">
-        <view class="price-name">{{ item.name }}</view>
-        <view class="price-value">¥{{ item.price }}/{{ item.unit }}</view>
+    <!-- 空状态 -->
+    <view v-else-if="categories.length === 0" class="empty-tip">
+      <view>暂无价格数据</view>
+    </view>
+
+    <!-- 分类价格列表 -->
+    <view v-else>
+      <view v-for="cat in categories" :key="cat.name" class="category-card">
+        <view class="category-title">
+          <text class="cat-dot">●</text>
+          <text>{{ cat.name }}</text>
+        </view>
+        <view v-for="item in cat.items" :key="item.name" class="price-row">
+          <text class="price-name">{{ item.name }}</text>
+          <text class="price-value">¥{{ item.price }}/{{ item.unit }}</text>
+        </view>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-const prices = [
-  {
-    name: '纸类',
-    items: [
-      { name: '报纸', price: 1.5, unit: 'kg' },
-      { name: '纸箱', price: 1.2, unit: 'kg' },
-      { name: '书本', price: 1.8, unit: 'kg' }
-    ]
-  },
-  {
-    name: '塑料',
-    items: [
-      { name: 'PET 瓶', price: 2.0, unit: 'kg' },
-      { name: 'PE 膜', price: 3.5, unit: 'kg' }
-    ]
-  },
-  {
-    name: '金属',
-    items: [
-      { name: '铁', price: 3.5, unit: 'kg' },
-      { name: '铝', price: 12.0, unit: 'kg' },
-      { name: '铜', price: 45.0, unit: 'kg' }
-    ]
-  },
-  {
-    name: '电器',
-    items: [
-      { name: '空调', price: 150.0, unit: '台' },
-      { name: '冰箱', price: 100.0, unit: '台' }
-    ]
+import { ref } from 'vue'
+import { onShow, onPullDownRefresh } from '@dcloudio/uni-app'
+import { fetchPrices } from '@/api/prices'
+
+const loading = ref(false)
+const categories = ref([])
+
+const loadPrices = async () => {
+  loading.value = true
+  try {
+    const res = await fetchPrices()
+    const raw = res.prices ?? res ?? []
+    // 按 category_name 分组
+    const map = {}
+    for (const item of raw) {
+      const catName = item.category_name || item.category || '其他'
+      if (!map[catName]) map[catName] = { name: catName, items: [] }
+      map[catName].items.push({
+        name: item.name,
+        price: item.price,
+        unit: item.unit || 'kg'
+      })
+    }
+    categories.value = Object.values(map)
+  } catch {
+    // 错误在 request.js 内提示
+  } finally {
+    loading.value = false
   }
-]
+}
+
+onShow(() => {
+  loadPrices()
+})
+
+onPullDownRefresh(async () => {
+  await loadPrices()
+  uni.stopPullDownRefresh()
+})
 </script>
 
 <style scoped>
 .container {
   padding: 20rpx;
+  background: #f5f7fa;
+  min-height: 100vh;
 }
 
-.header {
-  font-size: 40rpx;
-  font-weight: bold;
+.notice-bar {
+  background: #ecfdf5;
+  border: 1rpx solid #a7f3d0;
+  color: #047857;
+  padding: 20rpx 28rpx;
+  border-radius: 14rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+}
+
+.notice-icon {
+  margin-right: 10rpx;
+  font-size: 28rpx;
+}
+
+.empty-tip {
   text-align: center;
-  padding: 40rpx 0;
+  color: #999;
+  font-size: 28rpx;
+  padding: 80rpx 0;
 }
 
-.notice {
-  background: #ECF5FF;
-  color: #409EFF;
-  padding: 20rpx;
-  border-radius: 10rpx;
-  text-align: center;
-  margin-bottom: 30rpx;
-}
-
-.category {
-  background: white;
+.category-card {
+  background: #fff;
   border-radius: 20rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .category-title {
   font-size: 32rpx;
   font-weight: bold;
+  color: #10B981;
   margin-bottom: 20rpx;
-  color: #409EFF;
+  display: flex;
+  align-items: center;
 }
 
-.price-item {
+.cat-dot {
+  font-size: 20rpx;
+  margin-right: 10rpx;
+  color: #10B981;
+}
+
+.price-row {
   display: flex;
   justify-content: space-between;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #eee;
+  align-items: center;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
 }
 
-.price-item:last-child {
+.price-row:last-child {
   border-bottom: none;
 }
 
 .price-name {
   font-size: 28rpx;
-  color: #333;
+  color: #444;
 }
 
 .price-value {
-  font-size: 28rpx;
-  color: #F56C6C;
+  font-size: 30rpx;
   font-weight: bold;
+  color: #ef4444;
 }
 </style>
